@@ -1,0 +1,119 @@
+version: "3"
+
+services:
+    api-gateway:
+        restart: always
+        image: micro-nginx/gateway
+        container_name: micro-gateway
+        build:
+            context: ./gateway_nginx
+        ports:
+            - 80:80
+        depends_on:
+            - product
+            - auth
+            - analytic
+
+    product:
+        restart: always
+        image: micro-express/product
+        container_name: micro-product
+        build:
+            context: ./service_products
+        environment: 
+            NODE_ENV: production
+            JWT_SECRET: ourSignKeyIsImportant
+            MONGO_URL: mongodb://root:example@micro-mongo:27017/product?authSource=admin
+        depends_on: 
+            - mongo
+
+    auth:
+        restart: always
+        image: micro-php/auth
+        container_name: micro-auth
+        build:
+            context: ./service_authentication
+        environment: 
+            JWT_SECRET: ourSignKeyIsImportant
+        depends_on: 
+            - mysql
+
+    analytic:
+        restart: always
+        image: micro-python/analytic
+        container_name: micro-analytic
+        environment: 
+            PRODUCT_API_HOST: micro-product
+            PRODUCT_API_PORT: 3000 
+        build:
+            context: ./service_analytic
+
+    service_shipping:
+        build:
+            dockerfile: service_shipping/Dockerfile
+            context: .
+        ports:
+            - 8000:8000
+        depends_on:
+            - db
+
+    db:
+        image: postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: example
+            POSTGRES_DB: shipping_db
+
+    # shipping:
+    #     restart: always
+    #     image: micro-python/shipping
+    #     container_name: micro-shipping
+    #     environment: 
+    #         PRODUCT_API_HOST: micro-shipping
+    #         PRODUCT_API_PORT: 3000 
+    #     build:
+    #         context: ./service_shipping
+
+    ui:
+        restart: always
+        image: micro-nextjs/ui
+        container_name: micro-ui
+        build:
+            context: ./ui_api_consumer
+        depends_on: 
+            - api-gateway
+
+    mongo:
+        image: mongo
+        container_name: micro-mongo
+        volumes: 
+            - ./data/mongo:/data/db
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: example
+            MONGO_INITDB_DATABASE: product
+
+    mongo-express:
+        restart: always
+        container_name: micro-mexpress
+        image: mongo-express
+        depends_on:
+            - mongo
+        environment:
+            - ME_CONFIG_MONGODB_SERVER=micro-mongo
+            - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+            - ME_CONFIG_MONGODB_ADMINPASSWORD=example
+            - ME_CONFIG_BASICAUTH_USERNAME=admin
+            - ME_CONFIG_BASICAUTH_PASSWORD=password
+
+    mysql:
+        image: mysql:8
+        container_name: micro-mysql
+        command: '--default-authentication-plugin=mysql_native_password'
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: auth
+            MYSQL_USER: test
+            MYSQL_PASSWORD: example
+            MYSQL_ROOT_PASSWORD: password

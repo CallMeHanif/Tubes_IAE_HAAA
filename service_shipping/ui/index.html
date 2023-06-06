@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shipping Service</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <h1>Shipping Service</h1>
+    <div id="shipping-form">
+        <label for="origin">Origin:</label>
+        <input type="text" id="origin" name="origin">
+        <br>
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination">
+        <br>
+        <label for="weight">Weight:</label>
+        <input type="text" id="weight" name="weight">
+        <br>
+        <label for="courier">Courier:</label>
+        <input type="text" id="courier" name="courier">
+        <br>
+        <button onclick="calculateShipping()">Calculate Shipping Cost</button>
+    </div>
+    <div id="shipping-result"></div>
+    <script src="script.js"></script>
+</body>
+</html>
